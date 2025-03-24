@@ -17,4 +17,5 @@ A new Flutter project.
 ## Getting Started
 - Các chức năng vẫn còn đơn sơ cần được phát triển thêm .
 - Database : https://firebase.google.com/
-Cảm ơn đã xem .
+- Cảm ơn đã xem .
+
