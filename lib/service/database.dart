@@ -1,34 +1,49 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DatabaseMethods {
-  Future addEmployeeDetails(
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  
+
+  // 🔍 Kiểm tra ID sản phẩm đã tồn tại chưa
+  Future<bool> checkIfIdExists(String idsp) async {
+    QuerySnapshot querySnapshot = await _firestore
+        .collection("Employees")
+        .where("IDSP", isEqualTo: idsp)
+        .get();
+
+    return querySnapshot.docs.isNotEmpty; // Trả về true nếu IDSP đã tồn tại
+  }
+
+  // 🆕 Thêm sản phẩm (Chặn ID trùng)
+  Future<String> addEmployeeDetails(
     Map<String, dynamic> employeeInfoMap,
     String id,
   ) async {
-    return await FirebaseFirestore.instance
-        .collection("Employees")
-        .doc(id)
-        .set(employeeInfoMap);
+    bool exists = await checkIfIdExists(employeeInfoMap["IDSP"]);
+    if (exists) {
+      return "ID sản phẩm đã tồn tại!";
+    }
+
+    await _firestore.collection("Employees").doc(id).set(employeeInfoMap);
+    return "Thêm sản phẩm thành công!";
   }
-//Read employee
+
+  // 📥 Đọc danh sách sản phẩm
   Future<Stream<QuerySnapshot>> getEmployeeDetails() async {
-    return FirebaseFirestore.instance.collection("Employees").snapshots();
+    return _firestore.collection("Employees").snapshots();
   }
-// Update employee
-  Future updateEmployeeDetails(
+
+  // ✏️ Cập nhật sản phẩm
+  Future<void> updateEmployeeDetails(
     String id,
     Map<String, dynamic> updateInfo,
   ) async {
-    return await FirebaseFirestore.instance
-        .collection("Employees")
-        .doc(id)
-        .update(updateInfo);
+    await _firestore.collection("Employees").doc(id).update(updateInfo);
   }
-// Delete employee
-  Future deleteEmployee(String id) async {
-    return await FirebaseFirestore.instance
-        .collection("Employees")
-        .doc(id)
-        .delete();
+
+  // ❌ Xóa sản phẩm
+  Future<void> deleteEmployee(String id) async {
+    await _firestore.collection("Employees").doc(id).delete();
   }
 }

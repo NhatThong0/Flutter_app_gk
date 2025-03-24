@@ -11,9 +11,12 @@ class Employee extends StatefulWidget {
 }
 
 class _EmployeeState extends State<Employee> {
-  TextEditingController nameEditingController = new TextEditingController();
-  TextEditingController ageEditingController = new TextEditingController();
-  TextEditingController locationEditingController = new TextEditingController();
+  TextEditingController idspEditingController = TextEditingController();
+  TextEditingController giaEditingController = TextEditingController();
+  TextEditingController loaiEditingController = TextEditingController();
+  TextEditingController imageEditingController = TextEditingController();
+
+  String imageUrl = "";
 
   @override
   Widget build(BuildContext context) {
@@ -23,13 +26,13 @@ class _EmployeeState extends State<Employee> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "Employee ",
+              "Thêm ",
               style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
             ),
             Text(
-              "Form",
+              "Sản Phẩm",
               style: TextStyle(
-                color: const Color.fromARGB(255, 240, 2, 2),
+                color: Color.fromARGB(255, 240, 2, 2),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -37,110 +40,133 @@ class _EmployeeState extends State<Employee> {
         ),
       ),
       body: Container(
-        margin: EdgeInsets.only(left: 20.0),
+        margin: EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "ID san pham",
-              style: TextStyle(
-                color: const Color.fromARGB(255, 21, 17, 17),
-                fontSize: 24.0,
-                fontWeight: FontWeight.bold,
-              ),
+            buildTextField(
+              "ID sản phẩm",
+              "Nhập ID sản phẩm",
+              idspEditingController,
+              isNumeric: true,
+            ),
+            buildTextField(
+              "Giá",
+              "Nhập giá sản phẩm",
+              giaEditingController,
+              isNumeric: true,
+            ),
+            buildTextField(
+              "Loại sản phẩm",
+              "Nhập loại sản phẩm",
+              loaiEditingController,
+            ),
+            buildTextField(
+              "Hình ảnh",
+              "Nhập URL hình ảnh",
+              imageEditingController,
+              onChanged: (value) {
+                setState(() {
+                  imageUrl = value;
+                });
+              },
             ),
             SizedBox(height: 10.0),
-            Container(
-              padding: EdgeInsets.only(left: 10.0),
-              decoration: BoxDecoration(
-                border: Border.all(),
-                borderRadius: BorderRadius.circular(5.0),
-              ),
-              child: TextField(
-                controller: nameEditingController,
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: "Nhập id cua san pham",
-                ),
-              ),
-            ),
-            Text(
-              "gia",
-              style: TextStyle(
-                color: const Color.fromARGB(255, 0, 0, 0),
-                fontSize: 24.0,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            imageUrl.isNotEmpty
+                ? Image.network(
+                    imageUrl,
+                    height: 100,
+                    width: 100,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Text("URL không hợp lệ");
+                    },
+                  )
+                : Container(),
             SizedBox(height: 10.0),
-            Container(
-              padding: EdgeInsets.only(left: 10.0),
-              decoration: BoxDecoration(
-                border: Border.all(),
-                borderRadius: BorderRadius.circular(5.0),
-              ),
-              child: TextField(
-                controller: ageEditingController,
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: "Nhập gia cua san pham",
-                ),
-              ),
-            ),
-            Text(
-              "loai san pham",
-              style: TextStyle(
-                color: const Color.fromARGB(255, 0, 0, 0),
-                fontSize: 24.0,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 10.0),
-            Container(
-              padding: EdgeInsets.only(left: 10.0),
-              decoration: BoxDecoration(
-                border: Border.all(),
-                borderRadius: BorderRadius.circular(5.0),
-              ),
-              child: TextField(
-                controller: locationEditingController,
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: "Nhập loai san pham",
-                ),
-              ),
-            ),
             ElevatedButton(
               onPressed: () async {
+                if (idspEditingController.text.isEmpty ||
+                    giaEditingController.text.isEmpty ||
+                    loaiEditingController.text.isEmpty ||
+                    imageEditingController.text.isEmpty) {
+                  Fluttertoast.showToast(
+                    msg: "Vui lòng nhập đầy đủ thông tin",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.CENTER,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                  );
+                  return;
+                }
+
                 String Id = randomAlphaNumeric(10);
                 Map<String, dynamic> employeeInfoMap = {
-                  "IDSP": nameEditingController.text,
-                  "Gia": ageEditingController.text,
+                  "IDSP": idspEditingController.text,
+                  "Gia": giaEditingController.text,
                   "Id": Id,
-                  "Loai": locationEditingController.text,
+                  "Loai": loaiEditingController.text,
+                  "HinhAnh": imageEditingController.text,
                 };
-                await DatabaseMethods()
-                    .addEmployeeDetails(employeeInfoMap, Id)
-                    .then((value) {
-                      Fluttertoast.showToast(
-                        msg: "Employee details added successfully",
-                        toastLength: Toast.LENGTH_SHORT,
-                        gravity: ToastGravity.CENTER,
-                        timeInSecForIosWeb: 1,
-                        backgroundColor: Colors.red,
-                        textColor: Colors.white,
-                        fontSize: 16.0,
-                      );
-                    });
+
+                // Kiểm tra ID sản phẩm trùng lặp trước khi thêm
+                String result = await DatabaseMethods().addEmployeeDetails(employeeInfoMap, Id);
+                
+                Fluttertoast.showToast(
+                  msg: result,
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.CENTER,
+                  backgroundColor: result == "Thêm sản phẩm thành công!" ? Colors.green : Colors.red,
+                  textColor: Colors.white,
+                );
               },
               child: Text(
-                "Submit",
+                "Thêm",
                 style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget buildTextField(
+    String label,
+    String hint,
+    TextEditingController controller, {
+    bool isNumeric = false,
+    Function(String)? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 18.0,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 7.0),
+        Container(
+          padding: EdgeInsets.only(left: 5.0),
+          decoration: BoxDecoration(
+            border: Border.all(),
+            borderRadius: BorderRadius.circular(5.0),
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+            onChanged: onChanged,
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              hintText: hint,
+            ),
+          ),
+        ),
+        SizedBox(height: 10.0),
+      ],
     );
   }
 }
